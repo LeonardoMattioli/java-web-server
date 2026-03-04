@@ -3,6 +3,7 @@ package server;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -24,6 +25,8 @@ public class Server {
                         clientSocket.getInetAddress().getHostAddress());
 
                 lerRequisicao(clientSocket);
+                enviarResposta(clientSocket);
+                clientSocket.close();
             }
 
         } catch (IOException e) {
@@ -43,10 +46,35 @@ public class Server {
             }
 
             System.out.println("--- fim da requisição ---");
-            clientSocket.close();
 
         } catch (IOException e) {
             System.err.println("Erro ao ler requisição: " + e.getMessage());
+        }
+    }
+
+    private void enviarResposta(Socket clientSocket) {
+        try {
+            String body = """
+                    <html>
+                        <body>
+                            <h1>Java Web Server</h1>
+                            <p>Servidor funcionando!</p>
+                        </body>
+                    </html>
+                    """;
+
+            PrintWriter writer = new PrintWriter(clientSocket.getOutputStream());
+            writer.println("HTTP/1.1 200 OK");
+            writer.println("Content-Type: text/html");
+            writer.println("Content-Length: " + body.length());
+            writer.println("");
+            writer.println(body);
+            writer.flush();
+
+            System.out.println("Resposta enviada com sucesso!");
+
+        } catch (IOException e) {
+            System.err.println("Erro ao enviar resposta: " + e.getMessage());
         }
     }
 
