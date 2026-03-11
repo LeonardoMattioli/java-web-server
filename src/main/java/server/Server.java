@@ -6,6 +6,8 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Server {
 
@@ -43,10 +45,7 @@ public class Server {
             String requestLine = reader.readLine();
             parsearRequestLine(requestLine);
 
-            String linha;
-            while ((linha = reader.readLine()) != null && !linha.isEmpty()) {
-                System.out.println(linha);
-            }
+            Map<String, String> headers = parsearHeaders(reader);
 
             System.out.println("--- fim da requisição ---");
 
@@ -91,6 +90,23 @@ public class Server {
         System.out.println("Método: " + metodo + " | Path: " + path + " | Versão: " + versao);
 
         return partes;
+    }
+
+    private Map<String, String> parsearHeaders(BufferedReader reader) throws IOException {
+        Map<String, String> headers = new HashMap<>();
+
+        String linha;
+        while ((linha = reader.readLine()) != null && !linha.isEmpty()) {
+            int separador = linha.indexOf(":");
+            String chave = linha.substring(0, separador).trim();
+            String valor = linha.substring(separador + 1).trim();
+            headers.put(chave, valor);
+        }
+
+        System.out.println("--- Headers parseados ---");
+        headers.forEach((chave, valor) -> System.out.println(chave + ": " + valor));
+
+        return headers;
     }
 
     public static void main(String[] args) {
