@@ -12,9 +12,11 @@ import java.util.Map;
 public class Server {
 
     private final int port;
+    private final HttpRequestParser parser;
 
     public Server(int port) {
         this.port = port;
+        this.parser = new HttpRequestParser();
     }
 
     public void start() {
@@ -26,31 +28,15 @@ public class Server {
                 System.out.println("Nova conexão recebida de: " +
                         clientSocket.getInetAddress().getHostAddress());
 
-                lerRequisicao(clientSocket);
+                HttpRequest request = parser.parse(clientSocket);
+                System.out.println(request);
+
                 enviarResposta(clientSocket);
                 clientSocket.close();
             }
 
         } catch (IOException e) {
             System.err.println("Erro ao iniciar o servidor: " + e.getMessage());
-        }
-    }
-
-    private void lerRequisicao(Socket clientSocket) {
-        try {
-            BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(clientSocket.getInputStream())
-            );
-
-            String requestLine = reader.readLine();
-            parsearRequestLine(requestLine);
-
-            Map<String, String> headers = parsearHeaders(reader);
-
-            System.out.println("--- fim da requisição ---");
-
-        } catch (IOException e) {
-            System.err.println("Erro ao ler requisição: " + e.getMessage());
         }
     }
 
@@ -78,35 +64,6 @@ public class Server {
         } catch (IOException e) {
             System.err.println("Erro ao enviar resposta: " + e.getMessage());
         }
-    }
-
-    private String[] parsearRequestLine(String requestLine) {
-        String[] partes = requestLine.split(" ");
-
-        String metodo  = partes[0];
-        String path    = partes[1];
-        String versao  = partes[2];
-
-        System.out.println("Método: " + metodo + " | Path: " + path + " | Versão: " + versao);
-
-        return partes;
-    }
-
-    private Map<String, String> parsearHeaders(BufferedReader reader) throws IOException {
-        Map<String, String> headers = new HashMap<>();
-
-        String linha;
-        while ((linha = reader.readLine()) != null && !linha.isEmpty()) {
-            int separador = linha.indexOf(":");
-            String chave = linha.substring(0, separador).trim();
-            String valor = linha.substring(separador + 1).trim();
-            headers.put(chave, valor);
-        }
-
-        System.out.println("--- Headers parseados ---");
-        headers.forEach((chave, valor) -> System.out.println(chave + ": " + valor));
-
-        return headers;
     }
 
     public static void main(String[] args) {
