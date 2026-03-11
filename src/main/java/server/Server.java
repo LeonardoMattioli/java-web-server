@@ -40,6 +40,9 @@ public class Server {
                     new InputStreamReader(clientSocket.getInputStream())
             );
 
+            String requestLine = reader.readLine();
+            parsearRequestLine(requestLine);
+
             String linha;
             while ((linha = reader.readLine()) != null && !linha.isEmpty()) {
                 System.out.println(linha);
@@ -76,6 +79,18 @@ public class Server {
         } catch (IOException e) {
             System.err.println("Erro ao enviar resposta: " + e.getMessage());
         }
+    }
+
+    private String[] parsearRequestLine(String requestLine) {
+        String[] partes = requestLine.split(" ");
+
+        String metodo  = partes[0];
+        String path    = partes[1];
+        String versao  = partes[2];
+
+        System.out.println("Método: " + metodo + " | Path: " + path + " | Versão: " + versao);
+
+        return partes;
     }
 
     public static void main(String[] args) {
