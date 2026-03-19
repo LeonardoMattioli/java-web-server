@@ -8,10 +8,12 @@ public class Server {
 
     private final int port;
     private final HttpRequestParser parser;
+    private final StaticFileHandler fileHandler;
 
     public Server(int port) {
         this.port = port;
         this.parser = new HttpRequestParser();
+        this.fileHandler = new StaticFileHandler("public");
     }
 
     public void start() {
@@ -25,6 +27,8 @@ public class Server {
 
                 HttpRequest request = parser.parse(clientSocket);
                 System.out.println(request);
+
+                fileHandler.resolve(request.getPath());
 
                 HttpResponse response = new HttpResponse(200, "OK");
                 response.addHeader("Content-Type", "text/html");
