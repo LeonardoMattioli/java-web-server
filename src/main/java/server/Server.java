@@ -31,13 +31,29 @@ public class Server {
                     System.out.println(request);
 
                     File arquivo = fileHandler.resolve(request.getPath());
-                    byte[] conteudo = fileHandler.lerArquivo(arquivo);
-                    String mimeType = fileHandler.detectarMimeType(arquivo);
 
-                    HttpResponse response = new HttpResponse(200, "OK");
-                    response.addHeader("Content-Type", mimeType);
-                    response.setBody(new String(conteudo));
-                    response.send(clientSocket.getOutputStream());
+                    if (!fileHandler.arquivoExiste(arquivo)) {
+                        System.out.println("Arquivo não encontrado: " + arquivo.getAbsolutePath());
+                        HttpResponse response = new HttpResponse(404, "Not Found");
+                        response.addHeader("Content-Type", "text/html");
+                        response.setBody("""
+                                <html>
+                                    <body>
+                                        <h1>404 - Pagina nao encontrada</h1>
+                                        <p>O recurso solicitado nao existe neste servidor.</p>
+                                    </body>
+                                </html>
+                                """);
+                        response.send(clientSocket.getOutputStream());
+                    } else {
+                        byte[] conteudo = fileHandler.lerArquivo(arquivo);
+                        String mimeType = fileHandler.detectarMimeType(arquivo);
+
+                        HttpResponse response = new HttpResponse(200, "OK");
+                        response.addHeader("Content-Type", mimeType);
+                        response.setBody(new String(conteudo));
+                        response.send(clientSocket.getOutputStream());
+                    }
 
                 } catch (IOException e) {
                     System.err.println("Erro ao processar requisição: " + e.getMessage());

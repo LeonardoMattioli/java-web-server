@@ -48,4 +48,8 @@ public class StaticFileHandler {
         String extensao = nome.substring(ponto + 1).toLowerCase();
         return mimeTypes.getOrDefault(extensao, "application/octet-stream");
     }
+
+    public boolean arquivoExiste(File arquivo) {
+        return arquivo.exists() && arquivo.isFile();
+    }
 }
