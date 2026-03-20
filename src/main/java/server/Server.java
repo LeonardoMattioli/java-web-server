@@ -32,9 +32,10 @@ public class Server {
 
                     File arquivo = fileHandler.resolve(request.getPath());
                     byte[] conteudo = fileHandler.lerArquivo(arquivo);
+                    String mimeType = fileHandler.detectarMimeType(arquivo);
 
                     HttpResponse response = new HttpResponse(200, "OK");
-                    response.addHeader("Content-Type", "text/html");
+                    response.addHeader("Content-Type", mimeType);
                     response.setBody(new String(conteudo));
                     response.send(clientSocket.getOutputStream());
 
