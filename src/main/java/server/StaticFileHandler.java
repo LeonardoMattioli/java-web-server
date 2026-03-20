@@ -1,6 +1,8 @@
 package server;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 
 public class StaticFileHandler {
 
@@ -19,5 +21,9 @@ public class StaticFileHandler {
         System.out.println("Mapeando path: " + urlPath + " → " + arquivo.getAbsolutePath());
 
         return arquivo;
+    }
+
+    public byte[] lerArquivo(File arquivo) throws IOException {
+        return Files.readAllBytes(arquivo.toPath());
     }
 }

@@ -1,5 +1,6 @@
 package server;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -25,24 +26,23 @@ public class Server {
                 System.out.println("Nova conexão recebida de: " +
                         clientSocket.getInetAddress().getHostAddress());
 
-                HttpRequest request = parser.parse(clientSocket);
-                System.out.println(request);
+                try {
+                    HttpRequest request = parser.parse(clientSocket);
+                    System.out.println(request);
 
-                fileHandler.resolve(request.getPath());
+                    File arquivo = fileHandler.resolve(request.getPath());
+                    byte[] conteudo = fileHandler.lerArquivo(arquivo);
 
-                HttpResponse response = new HttpResponse(200, "OK");
-                response.addHeader("Content-Type", "text/html");
-                response.setBody("""
-                        <html>
-                            <body>
-                                <h1>Java Web Server</h1>
-                                <p>Servidor funcionando!</p>
-                            </body>
-                        </html>
-                        """);
+                    HttpResponse response = new HttpResponse(200, "OK");
+                    response.addHeader("Content-Type", "text/html");
+                    response.setBody(new String(conteudo));
+                    response.send(clientSocket.getOutputStream());
 
-                response.send(clientSocket.getOutputStream());
-                clientSocket.close();
+                } catch (IOException e) {
+                    System.err.println("Erro ao processar requisição: " + e.getMessage());
+                } finally {
+                    clientSocket.close();
+                }
             }
 
         } catch (IOException e) {
