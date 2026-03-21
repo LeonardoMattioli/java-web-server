@@ -26,44 +26,57 @@ public class Server {
                 System.out.println("Nova conexão recebida de: " +
                         clientSocket.getInetAddress().getHostAddress());
 
-                try {
-                    HttpRequest request = parser.parse(clientSocket);
-                    System.out.println(request);
-
-                    File arquivo = fileHandler.resolve(request.getPath());
-
-                    if (!fileHandler.arquivoExiste(arquivo)) {
-                        System.out.println("Arquivo não encontrado: " + arquivo.getAbsolutePath());
-                        HttpResponse response = new HttpResponse(404, "Not Found");
-                        response.addHeader("Content-Type", "text/html");
-                        response.setBody("""
-                                <html>
-                                    <body>
-                                        <h1>404 - Pagina nao encontrada</h1>
-                                        <p>O recurso solicitado nao existe neste servidor.</p>
-                                    </body>
-                                </html>
-                                """);
-                        response.send(clientSocket.getOutputStream());
-                    } else {
-                        byte[] conteudo = fileHandler.lerArquivo(arquivo);
-                        String mimeType = fileHandler.detectarMimeType(arquivo);
-
-                        HttpResponse response = new HttpResponse(200, "OK");
-                        response.addHeader("Content-Type", mimeType);
-                        response.setBody(new String(conteudo));
-                        response.send(clientSocket.getOutputStream());
-                    }
-
-                } catch (IOException e) {
-                    System.err.println("Erro ao processar requisição: " + e.getMessage());
-                } finally {
-                    clientSocket.close();
-                }
+                Thread thread = new Thread(() -> processarRequisicao(clientSocket));
+                thread.start();
             }
 
         } catch (IOException e) {
             System.err.println("Erro ao iniciar o servidor: " + e.getMessage());
+        }
+    }
+
+    private void processarRequisicao(Socket clientSocket) {
+        try {
+            System.out.println("[" + Thread.currentThread().getName() + "] Processando requisição...");
+
+            HttpRequest request = parser.parse(clientSocket);
+            System.out.println(request);
+
+            Thread.sleep(5000);
+
+            File arquivo = fileHandler.resolve(request.getPath());
+
+            if (!fileHandler.arquivoExiste(arquivo)) {
+                System.out.println("Arquivo não encontrado: " + arquivo.getAbsolutePath());
+                HttpResponse response = new HttpResponse(404, "Not Found");
+                response.addHeader("Content-Type", "text/html");
+                response.setBody("""
+                        <html>
+                            <body>
+                                <h1>404 - Página não encontrada</h1>
+                                <p>O recurso solicitado não existe neste servidor.</p>
+                            </body>
+                        </html>
+                        """);
+                response.send(clientSocket.getOutputStream());
+            } else {
+                byte[] conteudo = fileHandler.lerArquivo(arquivo);
+                String mimeType = fileHandler.detectarMimeType(arquivo);
+
+                HttpResponse response = new HttpResponse(200, "OK");
+                response.addHeader("Content-Type", mimeType);
+                response.setBody(new String(conteudo));
+                response.send(clientSocket.getOutputStream());
+            }
+
+        } catch (IOException | InterruptedException e) {
+            System.err.println("Erro ao processar requisição: " + e.getMessage());
+        } finally {
+            try {
+                clientSocket.close();
+            } catch (IOException e) {
+                System.err.println("Erro ao fechar socket: " + e.getMessage());
+            }
         }
     }
 
