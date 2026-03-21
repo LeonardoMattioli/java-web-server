@@ -4,17 +4,21 @@ import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Server {
 
     private final int port;
     private final HttpRequestParser parser;
     private final StaticFileHandler fileHandler;
+    private final ExecutorService executor;
 
     public Server(int port) {
         this.port = port;
         this.parser = new HttpRequestParser();
         this.fileHandler = new StaticFileHandler("public");
+        this.executor = Executors.newFixedThreadPool(10);
     }
 
     public void start() {
@@ -26,12 +30,13 @@ public class Server {
                 System.out.println("Nova conexão recebida de: " +
                         clientSocket.getInetAddress().getHostAddress());
 
-                Thread thread = new Thread(() -> processarRequisicao(clientSocket));
-                thread.start();
+                executor.submit(() -> processarRequisicao(clientSocket));
             }
 
         } catch (IOException e) {
             System.err.println("Erro ao iniciar o servidor: " + e.getMessage());
+        } finally {
+            executor.shutdown();
         }
     }
 
@@ -41,8 +46,6 @@ public class Server {
 
             HttpRequest request = parser.parse(clientSocket);
             System.out.println(request);
-
-            Thread.sleep(5000);
 
             File arquivo = fileHandler.resolve(request.getPath());
 
@@ -69,7 +72,7 @@ public class Server {
                 response.send(clientSocket.getOutputStream());
             }
 
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
             System.err.println("Erro ao processar requisição: " + e.getMessage());
         } finally {
             try {
