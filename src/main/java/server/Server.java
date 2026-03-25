@@ -54,33 +54,38 @@ public class Server {
     }
 
     private void processarRequisicao(Socket clientSocket) {
+        HttpResponse response = null;
         try {
             System.out.println("[" + Thread.currentThread().getName() + "] Processando requisição...");
 
-            HttpRequest request = parser.parse(clientSocket);
-            System.out.println(request);
+            HttpRequest request;
+            try {
+                request = parser.parse(clientSocket);
+            } catch (Exception e) {
+                System.err.println("Requisição malformada: " + e.getMessage());
+                response = ErrorHandler.badRequest("Requisição HTTP malformada.");
+                response.send(clientSocket.getOutputStream());
+                return;
+            }
 
-            HttpResponse response = new HttpResponse(200, "OK");
+            System.out.println(request);
+            response = new HttpResponse(200, "OK");
 
             Handler handler = router.resolve(request);
 
             if (handler != null) {
-                handler.handle(request, response);
+                try {
+                    handler.handle(request, response);
+                } catch (Exception e) {
+                    System.err.println("Erro no handler: " + e.getMessage());
+                    response = ErrorHandler.internalServerError("Erro interno ao processar a requisição.");
+                }
             } else {
                 File arquivo = fileHandler.resolve(request.getPath());
 
                 if (!fileHandler.arquivoExiste(arquivo)) {
                     System.out.println("Arquivo não encontrado: " + arquivo.getAbsolutePath());
-                    response = new HttpResponse(404, "Not Found");
-                    response.addHeader("Content-Type", "text/html");
-                    response.setBody("""
-                        <html>
-                            <body>
-                                <h1>404 - Página não encontrada</h1>
-                                <p>O recurso solicitado não existe neste servidor.</p>
-                            </body>
-                        </html>
-                        """);
+                    response = ErrorHandler.notFound(request.getPath());
                 } else {
                     byte[] conteudo = fileHandler.lerArquivo(arquivo);
                     String mimeType = fileHandler.detectarMimeType(arquivo);
@@ -91,8 +96,12 @@ public class Server {
 
             response.send(clientSocket.getOutputStream());
 
-        } catch (IOException e) {
-            System.err.println("Erro ao processar requisição: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Erro inesperado: " + e.getMessage());
+            try {
+                response = ErrorHandler.internalServerError("Erro interno inesperado.");
+                response.send(clientSocket.getOutputStream());
+            } catch (IOException ignored) {}
         } finally {
             try {
                 clientSocket.close();
