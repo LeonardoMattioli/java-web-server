@@ -28,7 +28,7 @@ public class StaticFileHandler {
         }
 
         File arquivo = new File(publicPath + urlPath);
-        System.out.println("Mapeando path: " + urlPath + " → " + arquivo.getAbsolutePath());
+        Logger.info("Mapeando path: " + urlPath + " → " + arquivo.getAbsolutePath());
 
         return arquivo;
     }

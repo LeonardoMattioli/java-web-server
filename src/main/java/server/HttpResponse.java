@@ -44,6 +44,10 @@ public class HttpResponse {
         out.write(bodyBytes);
         out.flush();
 
-        System.out.println("Resposta enviada: " + statusCode + " " + statusMessage);
+        Logger.info("Resposta enviada: " + statusCode + " " + statusMessage);
+    }
+
+    public int getStatusCode() {
+        return statusCode;
     }
 }
