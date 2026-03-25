@@ -2,7 +2,7 @@ package server;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,13 +11,13 @@ public class HttpResponse {
     private final int statusCode;
     private final String statusMessage;
     private final Map<String, String> headers;
-    private String body;
+    private byte[] bodyBytes;
 
     public HttpResponse(int statusCode, String statusMessage) {
         this.statusCode = statusCode;
         this.statusMessage = statusMessage;
         this.headers = new HashMap<>();
-        this.body = "";
+        this.bodyBytes = new byte[0];
     }
 
     public void addHeader(String key, String value) {
@@ -25,21 +25,24 @@ public class HttpResponse {
     }
 
     public void setBody(String body) {
-        this.body = body;
-        addHeader("Content-Length", String.valueOf(body.length()));
+        this.bodyBytes = body.getBytes(StandardCharsets.UTF_8);
+        addHeader("Content-Length", String.valueOf(this.bodyBytes.length));
     }
 
     public void send(OutputStream out) throws IOException {
-        PrintWriter writer = new PrintWriter(out);
+        StringBuilder cabecalho = new StringBuilder();
 
-        writer.println("HTTP/1.1 " + statusCode + " " + statusMessage);
+        cabecalho.append("HTTP/1.1 ").append(statusCode).append(" ").append(statusMessage).append("\r\n");
 
-        headers.forEach((chave, valor) -> writer.println(chave + ": " + valor));
+        headers.forEach((chave, valor) ->
+                cabecalho.append(chave).append(": ").append(valor).append("\r\n")
+        );
 
-        writer.println("");
+        cabecalho.append("\r\n");
 
-        writer.println(body);
-        writer.flush();
+        out.write(cabecalho.toString().getBytes(StandardCharsets.UTF_8));
+        out.write(bodyBytes);
+        out.flush();
 
         System.out.println("Resposta enviada: " + statusCode + " " + statusMessage);
     }

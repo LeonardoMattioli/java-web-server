@@ -21,6 +21,17 @@ public class Server {
         this.fileHandler = new StaticFileHandler("public");
         this.executor = Executors.newFixedThreadPool(10);
         this.router = new Router();
+
+        router.register("GET", "/hello", (request, response) -> {
+            response.addHeader("Content-Type", "application/json");
+            response.setBody("{\"message\": \"Hello, World!\", \"server\": \"Java Web Server\"}");
+        });
+
+        router.register("POST", "/echo", (request, response) -> {
+            System.out.println("Body recebido no /echo: " + request.getBody());
+            response.addHeader("Content-Type", "text/plain");
+            response.setBody(request.getBody());
+        });
     }
 
     public void start() {
